@@ -5,11 +5,13 @@ from textblob import TextBlob
 
 # Configuração da página do Streamlit
 st.set_page_config(
-    page_title="Analisador de Sentimentos Offline", page_icon="📊", layout="centered"
+    page_title="Analisador de Sentimentos Offline",
+    page_icon="📊",
+    layout="centered",
 )
 
 
-# Garantir o download dos pacotes necessários do NLTK para o TextBlob
+# Garantir o download dos pacotes necessários do NLTK para o TextBlob de forma segura
 @st.cache_resource
 def load_nltk_dependencies():
   try:
@@ -25,37 +27,47 @@ load_nltk_dependencies()
 @st.cache_data
 def traduzir_para_ingles(texto):
   try:
-    # Usando MyMemoryTranslator como alternativa gratuita e estável contra rate-limits
+    # Usando MyMemoryTranslator como alternativa gratuita, estável e imune aos bloqueios por excesso de requisições do Google
     tradutor = MyMemoryTranslator(source="pt", target="en")
-    return tradutor.translate(texto)
+    resultado = tradutor.translate(texto)
+    return resultado if resultado else texto
   except Exception:
     return texto
 
 
 def main():
+  # Cabeçalho explicativo conforme regras de negócio
   st.title("📊 Analisador de Sentimentos Offline")
   st.markdown(
       "Esta é uma versão **Offline** desenvolvida com bibliotecas"
-      " tradicionais de Python (`TextBlob` e `deep-translator`)."
+      " tradicionais de Python (`TextBlob` e `deep-translator`). O"
+      " processamento de PLN é realizado localmente. Textos em português são"
+      " traduzidos via tradutor estável para o inglês para garantir máxima"
+      " precisão na análise de polaridade."
   )
 
   st.markdown("---")
 
+  # Área de texto para entrada do usuário
   user_input = st.text_area(
       "Digite seu texto abaixo para análise:",
       placeholder=(
-          "Ex: Estou extremamente satisfeito com o atendimento recebido hoje!"
+          "Ex: Estou extremamente satisfeito com o atendimento recebido"
+          " hoje!"
       ),
       height=150,
   )
 
+  # Botão 'Analisar'
   if st.button("Analisar Sentimento", type="primary"):
     if not user_input.strip():
-      st.warning("⚠️ Por favor, digite algum texto antes de clicar em analisar.")
+      st.warning(
+          "⚠️ Por favor, digite algum texto antes de clicar em analisar."
+      )
     else:
       with st.spinner("Processando análise de sentimentos..."):
         try:
-          # Tradução protegida por cache e backend estável
+          # Tradução segura e otimizada
           translated_text = traduzir_para_ingles(user_input)
 
           # Análise de Polaridade e Subjetividade com TextBlob
@@ -71,8 +83,8 @@ def main():
             )
           elif polarity < -0.05:
             st.error(
-                "### Resultado: **Negativo** 😞\nO texto transmite insatisfação,"
-                " crítica ou tom adverso."
+                "### Resultado: **Negativo** 😞\nO texto transmite"
+                " insatisfação, crítica ou tom adverso."
             )
           else:
             st.warning(
@@ -80,6 +92,7 @@ def main():
                 " informativo, impessoal ou equilibrado."
             )
 
+          # Expander com métricas detalhadas da análise
           with st.expander("Ver detalhes técnicos da análise"):
             st.write(f"**Texto Original:** {user_input}")
             st.write(f"**Texto Traduzido (Inglês):** {translated_text}")
@@ -93,12 +106,17 @@ def main():
             )
 
         except Exception as e:
-          st.error(f"Ocorreu um erro durante o processamento: {str(e)}")
+          st.error(
+              f"Ocorreu um erro durante o processamento: {str(e)}. Verifique a"
+              " conexão com a rede."
+          )
 
+  # Rodapé com menção à licença MIT
   st.markdown("---")
   st.markdown(
       "<div style='text-align: center; color: gray; font-size: 0.85em;'>"
-      "Analisador de Sentimentos Offline • Licença MIT"
+      "Analisador de Sentimentos Offline • Licença MIT • Desenvolvido com"
+      " Streamlit & Python"
       "</div>",
       unsafe_allow_html=True,
   )
